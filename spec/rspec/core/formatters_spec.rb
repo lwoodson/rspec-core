@@ -38,14 +38,27 @@ module RSpec::Core::Formatters
         expect(loader.formatters.first).to be_an_instance_of(CustomFormatter)
       end
 
-      it "handles formatters that dont implement notifications" do
+      context "when a legacy formatter is added with RSpec::LegacyFormatters" do
         formatter_class = Struct.new(:output)
-        loader.add formatter_class, output
-        expect(loader.formatters.first).to be_an_instance_of(RSpec::Core::Formatters::LegacyFormatter)
+        let(:formatter) { double "formatter" }
+
+        before do
+          class_double("RSpec::LegacyFormatters", :load => formatter).as_stubbed_const
+        end
+
+        it "loads formatters from the external gem" do
+          loader.add formatter_class, output
+          expect(loader.formatters).to eq [formatter]
+        end
       end
 
-      context "when a legacy formatter is added" do
+      context "when a legacy formatter is added without RSpec::LegacyFormatters" do
         formatter_class = Struct.new(:output)
+
+        before do
+          allow_deprecation
+          allow(RSpec.world).to receive(:wants_to_quit=)
+        end
 
         it "issues a deprecation" do
           expect_warn_deprecation_with_call_site(__FILE__, __LINE__ + 2,
@@ -53,17 +66,9 @@ module RSpec::Core::Formatters
           loader.add formatter_class, output
         end
 
-        it "does not mistakenly add in the progress formatter" do
-          # When we issue a deprecation warning it triggers `setup_defaults`,
-          # which adds the progress formatter if it thinks no formatter has been
-          # added yet.
-          allow(RSpec).to receive(:warn_deprecation) do
-            loader.setup_default(StringIO.new, StringIO.new)
-          end
-
+        it "tries to quit" do
+          expect(RSpec.world).to receive(:wants_to_quit=).with(true)
           loader.add formatter_class, output
-
-          expect(loader.formatters.grep(RSpec::Core::Formatters::ProgressFormatter)).to eq([])
         end
       end
 
