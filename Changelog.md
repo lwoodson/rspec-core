@@ -115,6 +115,8 @@ Bug Fixes:
   that it applies to files loaded by `--require`. (Myron Marston)
 * Issue a warning when you set `config.deprecation_stream` too late for
   it to take effect because the reporter has already been setup. (Myron Marston)
+* Line number always takes precendence when running specs with filters.
+  (Xavier Shay, #779)
 
 ### 3.0.0.beta2 / 2014-02-17
 [Full Changelog](http://github.com/rspec/rspec-core/compare/v3.0.0.beta1...v3.0.0.beta2)
